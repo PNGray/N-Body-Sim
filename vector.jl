@@ -97,6 +97,7 @@ end
 
 
 #3d vector, has the same methods as the 2d one
+
 mutable struct Vec3d <: Vec
     x::Float64
     y::Float64
