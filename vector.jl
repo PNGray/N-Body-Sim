@@ -8,23 +8,25 @@ mutable struct Vec2d <: Vec
 end
 const ORIGIN2 = Vec2d(0, 0)
 Base.:+(a::Vec2d, b::Vec2d) = Vec2d(a.x + b.x, a.y + b.y)
-add(a::Vec2d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
 Base.:-(a::Vec2d, b::Vec2d) = Vec2d(a.x - b.x, a.y - b.y)
 Base.:-(a::Vec2d) = Vec2d(-a.x, -a.y)
 Base.:*(a::Float64, b::Vec2d) = Vec2d(a * b.x, a * b.y)
-mul(a::Vec2d, b::Float64) = begin a.x *= b; a.y *= b; end
 Base.:/(a::Vec2d, b::Float64) = (1 / b) * a
 Base.:(==)(a::Vec2d, b::Vec2d) = a.x == b.x && a.y == b.y
 
+#These modify the first vector without creating a new one, faster than +, *
+add(a::Vec2d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
+mul(a::Vec2d, b::Float64) = begin a.x *= b; a.y *= b; end
 
 
-dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y
-cross(a::Vec2d, b::Vec2d)::Float64 = a.x * b.y - a.y * b.x
-len(a::Vec2d) = sqrt(a.x^2 + a.y^2)
-lensqr(a::Vec2d) = a.x^2 + a.y^2
-dis(a::Vec2d, b::Vec2d) = len(a - b)
+dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y #dot product
+cross(a::Vec2d, b::Vec2d)::Float64 = a.x * b.y - a.y * b.x #cross product
+len(a::Vec2d) = sqrt(a.x^2 + a.y^2) #lenght of vector
+lensqr(a::Vec2d) = a.x^2 + a.y^2 #len^2, for optimization
+dis(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
 midPoint(a::Vec2d, b::Vec2d) = (a + b) / 2
 
+#return the quadrant of the point in space
 function quadrant(a::Vec2d)::UInt
     if a.x < 0
         if a.y < 0
@@ -93,7 +95,7 @@ end
 
 
 
-
+#3d vector, has the same methods as the 2d one
 mutable struct Vec3d <: Vec
     x::Float64
     y::Float64
