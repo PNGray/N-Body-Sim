@@ -5,6 +5,7 @@ mutable struct Vec2d <: Vec
     y::Float64
     Vec2d(a, b, c) = new(a, b)
     Vec2d(a, b) = new(a, b)
+    Vec2d(a) = new(a, a)
 end
 const ORIGIN2 = Vec2d(0, 0)
 Base.:+(a::Vec2d, b::Vec2d) = Vec2d(a.x + b.x, a.y + b.y)
@@ -100,6 +101,7 @@ mutable struct Vec3d <: Vec
     x::Float64
     y::Float64
     z::Float64
+    Vec3d(a) = new(a, a, a)
 end
 
 const ORIGIN3 = Vec3d(0, 0, 0)
