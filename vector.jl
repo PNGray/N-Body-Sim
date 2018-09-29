@@ -103,6 +103,7 @@ mutable struct Vec3d <: Vec
     y::Float64
     z::Float64
     Vec3d(a) = new(a, a, a)
+    Vec3d(a, b, c) = new(a, b, c)
 end
 
 const ORIGIN3 = Vec3d(0.0, 0.0, 0.0)
