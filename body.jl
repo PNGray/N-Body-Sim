@@ -67,7 +67,7 @@ end
 
 Base.:+(a::Body, b::Body) = Body(((a.mass * a.pos) + (b.mass * b.pos)) / (a.mass + b.mass), a.vel, a.acc, a.mass + b.mass, 0)
 add(a::Body, b::Body) = begin
-    a.pos *= a.mass
+    a.pos = a.mass * a.pos
     a.pos += b.mass * b.pos
     a.mass += b.mass
     a.pos /= a.mass

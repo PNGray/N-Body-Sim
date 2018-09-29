@@ -33,7 +33,7 @@ function generate3d(infile::IO)
 end
 
 function cycle(bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
-    tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
+    tree = Tree{T}((-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
     Threads.@threads for i in bodies
         updatePos(i, 0.5dt)
     end
