@@ -7,7 +7,7 @@ mutable struct Vec2d <: Vec
     Vec2d(a, b) = new(a, b)
     Vec2d(a) = new(a, a)
 end
-const ORIGIN2 = Vec2d(0, 0)
+const ORIGIN2 = Vec2d(0.0, 0.0)
 Base.:+(a::Vec2d, b::Vec2d) = Vec2d(a.x + b.x, a.y + b.y)
 Base.:-(a::Vec2d, b::Vec2d) = Vec2d(a.x - b.x, a.y - b.y)
 Base.:-(a::Vec2d) = Vec2d(-a.x, -a.y)
@@ -105,7 +105,7 @@ mutable struct Vec3d <: Vec
     Vec3d(a) = new(a, a, a)
 end
 
-const ORIGIN3 = Vec3d(0, 0, 0)
+const ORIGIN3 = Vec3d(0.0, 0.0, 0.0)
 Base.:+(a::Vec3d, b::Vec3d) = Vec3d(a.x + b.x, a.y + b.y, a.z + b.z)
 add(a::Vec3d, b::Vec3d) = begin a.x += b.x; a.y += b.y; a.z += b.z; end
 add(a::Vec3d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
