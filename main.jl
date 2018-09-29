@@ -8,10 +8,10 @@ function generate2d(infile::IO)
     for i in 1:length(list)
         if length(list[i]) < 5 continue end
         elems = map(x->parse(Float64, x), list[i])
-        pos = Vec2d(elems[1], elems[2])
-        vel = Vec2d(elems[3], elems[4])
+        pos = (elems[1], elems[2])
+        vel = (elems[3], elems[4])
         mass = elems[5]
-        push!(bodies, Body(pos, vel, Vec2d(0.0, 0.0), mass, i))
+        push!(bodies, Body(pos, vel, (0.0, 0.0), mass, i))
     end
     bodies
 end
@@ -24,10 +24,10 @@ function generate3d(infile::IO)
     for i in 1:length(list)
         if length(list[i]) < 7 continue end
         elems = map(x->parse(Float64, x), list[i])
-        pos = Vec3d(elems[1], elems[2], elems[3])
-        vel = Vec3d(elems[4], elems[5], elems[6])
+        pos = (elems[1], elems[2], elems[3])
+        vel = (elems[4], elems[5], elems[6])
         mass = elems[7]
-        push!(bodies, Body(pos, vel, Vec3d(0.0, 0.0, 0.0), mass, i))
+        push!(bodies, Body(pos, vel, (0.0, 0.0, 0.0), mass, i))
     end
     bodies
 end
