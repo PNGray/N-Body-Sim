@@ -32,8 +32,9 @@ function generate3d(infile::IO)
     bodies
 end
 
-function cycle(bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
-    tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
+function cycle(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
+    tree.children = Vector{Tree{T}}()
+    tree.center = nothing
     Threads.@threads for i in bodies
         updatePos(i, 0.5dt)
     end
@@ -63,8 +64,9 @@ function main()
     else
         bodies = generate3d(infile)
     end
-    for i in 0:3000
-        cycle(bodies, 0.0001, 0.3)
+    tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
+    for i in 0:300
+        cycle(tree, bodies, 0.0001, 0.3)
         if i % 30 == 0
             println(i)
             for j in bodies
