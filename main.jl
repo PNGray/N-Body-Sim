@@ -64,8 +64,9 @@ function main()
     else
         bodies = generate3d(infile)
     end
+    n = parse(Int, ARGS[4])
     tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
-    for i in 0:300
+    for i in 0:n
         cycle(tree, bodies, 0.0001, 0.3)
         if i % 30 == 0
             println(i)
