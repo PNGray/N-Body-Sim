@@ -52,7 +52,6 @@ function cycle(bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
 end
 
 function main()
-    a = time_ns()
     infilename = ARGS[1]
     outfilename = ARGS[2]
     infile = open(infilename, "r")
@@ -64,7 +63,7 @@ function main()
     else
         bodies = generate3d(infile)
     end
-    for i in 0:3000
+    for i in 0:300
         cycle(bodies, 0.0001, 0.3)
         if i % 30 == 0
             println(i)
@@ -79,8 +78,7 @@ function main()
             flush(outfile)
         end
     end
-    println((time_ns() - a) / 1000000)
 end
 
 println(ARGS)
-main()
+@time main()
