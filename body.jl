@@ -87,7 +87,7 @@ end
 function updateVel(a::Body{T}, dt::Float64) where {T}
     mul(a.acc, dt)
     add(a.vel, a.acc)
-    a.acc = T(0.0, 0.0, 0.0)
+    reset(a.acc)
 end
 
 function updateAcc(a::Body{T}, b::Body{T}, G::Float64) where {T}

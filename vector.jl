@@ -18,6 +18,7 @@ Base.:(==)(a::Vec2d, b::Vec2d) = a.x == b.x && a.y == b.y
 #These modify the first vector without creating a new one, faster than +, *
 add(a::Vec2d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
 mul(a::Vec2d, b::Float64) = begin a.x *= b; a.y *= b; end
+reset(a::Vec2d) = begin a.x = 0.0; a.y = 0.0; end
 
 
 dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y #dot product
@@ -108,16 +109,17 @@ end
 
 const ORIGIN3 = Vec3d(0.0, 0.0, 0.0)
 Base.:+(a::Vec3d, b::Vec3d) = Vec3d(a.x + b.x, a.y + b.y, a.z + b.z)
-add(a::Vec3d, b::Vec3d) = begin a.x += b.x; a.y += b.y; a.z += b.z; end
-add(a::Vec3d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
 Base.:-(a::Vec3d, b::Vec3d) = Vec3d(a.x - b.x, a.y - b.y, a.z - b.z)
 Base.:-(a::Vec3d) = Vec3d(-a.x, -a.y, -a.z)
 Base.:*(a::Float64, b::Vec3d) = Vec3d(a * b.x, a * b.y, a * b.z)
-mul(a::Vec3d, b::Float64) = begin a.x *= b; a.y *= b; a.z *= b; end
 Base.:/(a::Vec3d, b::Float64) = (1 / b) * a
 Base.:(==)(a::Vec3d, b::Vec3d) = a.x == b.x && a.y == b.y && a.z == b.z
 
 
+add(a::Vec3d, b::Vec3d) = begin a.x += b.x; a.y += b.y; a.z += b.z; end
+add(a::Vec3d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
+mul(a::Vec3d, b::Float64) = begin a.x *= b; a.y *= b; a.z *= b; end
+reset(a::Vec3d) = begin a.x = 0.0; a.y = 0.0; a.z = 0.0 end
 
 dot(a::Vec3d, b::Vec3d)::Float64 = a.x * b.x + a.y * b.y + a.z * b.z
 cross(a::Vec3d, b::Vec3d)::Vec3d = Vec3d(a.y * b.z - b.y * a.z, a.z * b.x - b.z * a.x, a.x * b.y - b.x * a.y)

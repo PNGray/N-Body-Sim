@@ -1,5 +1,7 @@
 include("body.jl")
 
+const G = 4(π^2)
+
 function generate2d(infile::IO)
     str = read(infile, String)
     list = map(x->split(x, " "), split(str, "\n"))
@@ -42,7 +44,7 @@ function cycle(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float
         push(tree, i)
     end
     Threads.@threads for i in bodies
-        apply(i, tree, theta, 1.0, dt)
+        apply(i, tree, theta, G, dt)
     end
     Threads.@threads for i in bodies
         updateVel(i, dt)
@@ -56,7 +58,11 @@ function main()
     infilename = ARGS[1]
     outfilename = ARGS[2]
     infile = open(infilename, "r")
-    outfile = open(outfilename, "w")
+    if outfilename == "stdout"
+        outfile = Base.stdout
+    else
+        outfile = open(outfilename, "w")
+    end
     T = parse(Int, ARGS[3]) == 2 ? Vec2d : Vec3d
     bodies::Vector{Body{T}} = []
     if parse(Int, ARGS[3]) == 2
