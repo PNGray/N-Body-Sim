@@ -74,7 +74,8 @@ add(a::Body, b::Body) = begin
 end
 
 Base.show(io::IO, b::Body{Vec2d}) = @printf(io, "c %f %f %f", b.pos.x, b.pos.y, radius(b))
-Base.show(io::IO, b::Body{Vec3d}) = @printf(io, "c3 %f %f %f %f", b.pos.x, b.pos.y, b.pos.z, radius(b))
+Base.show(io::IO, b::Body{Vec3d}) = @printf(io, "c3 %f %f %f %f", b.pos.x, b.pos.y, b.pos.z, 0.1)
+showtrail(io::IO, b::Body{Vec3d}) = @printf(io, "ct3 %d %f %f %f %f", b.tag, b.pos.x, b.pos.y, b.pos.z, 0.1)
 
 
 radius(b::Body{Vec2d})::Float64 = 0.25(b.mass^0.5)
@@ -94,7 +95,7 @@ function updateAcc(a::Body{T}, b::Body{T}, G::Float64) where {T}
     e = 0.5(radius(a) + radius(b))
     r = a.pos - b.pos
     rlensqr = lensqr(r)
-    add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5)) * r)
+    add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5) * r))
 end
 
 function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float64) where {T}
@@ -106,7 +107,7 @@ function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float6
             updateAcc(a, tree.center, G)
         end
     else
-        if tree.size / dis(tree.center.pos, a.pos) < theta
+        if tree.size / dist(tree.center.pos, a.pos) < theta
             updateAcc(a, tree.center, G)
         else
             for i in tree.children

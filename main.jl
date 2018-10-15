@@ -54,6 +54,18 @@ function cycle(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float
     end
 end
 
+function calculate_energy(bodies::vector{Body{T}}) where {T}
+    energy = 0
+    for i in bodies
+        energy += 0.5i.mass * lensqr(i.vel)
+        for j in bodies
+            d = dist(i.pos, j.pos)
+            energy += G * i.mass * j.mass / d
+        end
+    end
+    energy
+end
+
 function main()
     infilename = ARGS[1]
     outfilename = ARGS[2]
@@ -73,8 +85,9 @@ function main()
     n = parse(Int, ARGS[4])
     tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
     for i in 0:n
-        cycle(tree, bodies, 0.0001, 0.3)
-        if i % 30 == 0
+        cycle(tree, bodies, 0.001, 0.3)
+        if i % 10 == 0
+            e = calculate_energy(bodies)
             println(i)
             for j in bodies
                 show(outfile, j)
@@ -82,6 +95,8 @@ function main()
             end
             write(outfile, "T -0.8 0.8\nt = ")
             write(outfile, string(i))
+            write(outfile, "energy = ")
+            write(outfile, string(e))
             write(outfile, "\n")
             write(outfile, "F\n")
             flush(outfile)

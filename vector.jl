@@ -25,7 +25,7 @@ dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y #dot product
 cross(a::Vec2d, b::Vec2d)::Float64 = a.x * b.y - a.y * b.x #cross product
 len(a::Vec2d) = sqrt(a.x^2 + a.y^2) #lenght of vector
 lensqr(a::Vec2d) = a.x^2 + a.y^2 #len^2, for optimization
-dis(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
+dist(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
 midPoint(a::Vec2d, b::Vec2d) = (a + b) / 2
 
 #return the quadrant of the point in space
@@ -125,7 +125,7 @@ dot(a::Vec3d, b::Vec3d)::Float64 = a.x * b.x + a.y * b.y + a.z * b.z
 cross(a::Vec3d, b::Vec3d)::Vec3d = Vec3d(a.y * b.z - b.y * a.z, a.z * b.x - b.z * a.x, a.x * b.y - b.x * a.y)
 len(a::Vec3d) = sqrt(a.x^2 + a.y^2 + a.z^2)
 lensqr(a::Vec3d) = a.x^2 + a.y^2 + a.z^2
-dis(a::Vec3d, b::Vec3d) = len(a - b)
+dist(a::Vec3d, b::Vec3d) = len(a - b)
 midPoint(a::Vec3d, b::Vec3d) = (a + b) / 2
 
 function quadrant(a::Vec3d)::UInt
