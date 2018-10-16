@@ -92,7 +92,7 @@ function updateVel(a::Body{T}, dt::Float64) where {T}
 end
 
 function updateAcc(a::Body{T}, b::Body{T}, G::Float64) where {T}
-    e = 0.5(radius(a) + radius(b))
+    e = 0.0(radius(a) + radius(b))
     r = a.pos - b.pos
     rlensqr = lensqr(r)
     add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5) * r))

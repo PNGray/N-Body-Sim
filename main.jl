@@ -1,6 +1,16 @@
 include("body.jl")
 
 const G = 4(π^2)
+const dt = 0.001
+
+mutable struct Pair{T}
+    a::Body{T}
+    b::Body{T}
+    x_last::Float64
+    t_last::Float64
+    T::Float64
+    halfs::Bool
+end
 
 function generate2d(infile::IO)
     str = read(infile, String)
@@ -34,7 +44,7 @@ function generate3d(infile::IO)
     bodies
 end
 
-function cycle(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
+function cycle_leapfrog(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
     tree.children = Vector{Tree{T}}()
     tree.center = nothing
     Threads.@threads for i in bodies
@@ -54,13 +64,30 @@ function cycle(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float
     end
 end
 
-function calculate_energy(bodies::vector{Body{T}}) where {T}
+function period_check(p::Pair, t::Float64)
+    x = p.a.pos.x - p.b.pos.x
+    v = p.a.vel.x - p.b.vel.x
+    if x * p.x_last < 0
+        p.x_last = x
+        if p.halfs
+            t_interpolate = t - v * x
+            p.T = t_interpolate - p.t_last
+            p.t_last = t_interpolate
+        end
+        p.halfs = !p.halfs
+    end
+end
+
+function calculate_energy(bodies::Vector{Body{T}}) where {T}
     energy = 0
     for i in bodies
         energy += 0.5i.mass * lensqr(i.vel)
         for j in bodies
+            if i == j
+                continue
+            end
             d = dist(i.pos, j.pos)
-            energy += G * i.mass * j.mass / d
+            energy -= G * i.mass * j.mass / d / 2
         end
     end
     energy
@@ -84,20 +111,21 @@ function main()
     end
     n = parse(Int, ARGS[4])
     tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
+    earth_sun = Pair(bodies[1], bodies[2], -1.0, 0.0, 0.0, false)
     for i in 0:n
-        cycle(tree, bodies, 0.001, 0.3)
+        t = i * dt
+        cycle_leapfrog(tree, bodies, dt, 0.3)
+        period_check(earth_sun, t)
         if i % 10 == 0
             e = calculate_energy(bodies)
             println(i)
             for j in bodies
-                show(outfile, j)
+                showtrail(outfile, j)
                 write(outfile, "\n")
             end
-            write(outfile, "T -0.8 0.8\nt = ")
-            write(outfile, string(i))
-            write(outfile, "energy = ")
-            write(outfile, string(e))
-            write(outfile, "\n")
+            @printf(outfile, "T -0.8 0.8\nt = %.2f", t)
+            @printf(outfile, "\tenergy = %e", e)
+            @printf(outfile, "\tperiod = %f\n", earth_sun.T)
             write(outfile, "F\n")
             flush(outfile)
         end
@@ -105,4 +133,8 @@ function main()
 end
 
 println(ARGS)
-@time main()
+if length(ARGS) == 0
+    println("infile outfile dim iterations")
+else
+    @time main()
+end
