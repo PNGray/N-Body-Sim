@@ -18,31 +18,39 @@ function generate3d(infile::IO, bodies::Vector{Body{Vec3d}})
 end
 function main()
     bodies::Vector{Body{Vec3d}} = []
-    if length(ARGS) == 3
-        for i in 3:(length(ARGS))
+    if length(ARGS) >= 4
+        for i in 4:(length(ARGS))
             generate3d(open(ARGS[i], "r"), bodies)
         end
     end
     n = parse(Int, ARGS[1])
     size = parse(Float64, ARGS[2])
+    jiggle = parse(Float64, ARGS[3])
     for i in 1:n
         T = Float64
+
         vec = Vec3d(randn(T), randn(T), randn(T))
         veclen = len(vec)
         mul(vec, 1 / veclen)
+
         r = size * ((rand(T))^(1 / 3))
         mul(vec, r)
+
         vecflat = Vec2d(vec.x, vec.y)
-        trans = 15.0
+
+        trans = 0.0
         vl = trans * vecflat / len(vecflat)
         add(vec, vl)
         add(vecflat, vl)
+
         vel = Vec2d(-vec.y, vec.x)
-        avg = size / 2 + trans
-        mul(vel, 1 / len(vecflat)^(1.5 + (avg - len(vecflat)) / 75size))
-        mul(vel, 10000.0^0.5)
-        vel += 0randn(T) * vecflat
-        z = 0randn(T)
+
+        # avg = size / 2 + trans
+        # mul(vel, 1 / len(vecflat)^(1.5 + (avg - len(vecflat)) / 75size))
+        mul(vel, 0000.0^0.5)
+
+        vel += jiggle * randn(T) * vecflat
+        z = jiggle * randn(T)
         push!(bodies, Body(vec, Vec3d(vel.x, vel.y, z), ORIGIN3, 0.5, 1))
         #println("$(vec.x) $(vec.y) $(vec.z) $(vel.x) $(vel.y) $z 0.08")
     end
@@ -51,7 +59,7 @@ function main()
     for i in bodies
         if i.tag == 0 continue end
         for j in bodies
-            d = dis(i.pos, j.pos)
+            d = dist(i.pos, j.pos)
             if d < 1.3(radius(i) + radius(j)) && d > 0
                 j.tag = 0
             end

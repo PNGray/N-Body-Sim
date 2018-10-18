@@ -74,7 +74,7 @@ add(a::Body, b::Body) = begin
 end
 
 Base.show(io::IO, b::Body{Vec2d}) = @printf(io, "c %f %f %f", b.pos.x, b.pos.y, radius(b))
-Base.show(io::IO, b::Body{Vec3d}) = @printf(io, "c3 %f %f %f %f", b.pos.x, b.pos.y, b.pos.z, 0.1)
+Base.show(io::IO, b::Body{Vec3d}) = @printf(io, "c3 %f %f %f %f", b.pos.x, b.pos.y, b.pos.z, radius(b))
 showtrail(io::IO, b::Body{Vec3d}) = @printf(io, "ct3 %d %f %f %f %f", b.tag, b.pos.x, b.pos.y, b.pos.z, 0.1)
 
 
