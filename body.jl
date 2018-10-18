@@ -103,6 +103,29 @@ function updateAccL(a::Body{T}, b::Body{T}, G::Float64) where {T}
     r = a.pos - b.pos
     rlensqr = lensqr(r)
     add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5) * r))
+
+    rad = 2e
+    rlen = sqrt(rlensqr)
+    dr = rlen - rad
+
+    if dr > 0.01 && dr < 0.011
+        dp = (a.mass * a.vel)
+        add(dp, -b.mass * b.vel)
+        mul(dp, -5e-4 * 30 / dt / a.mass)
+        add(a.acc, dp)
+    end
+
+    if dr <= 0
+        rhat = r / rlen
+        f = -5 * 10000dr / a.mass
+        add(a.acc, f * rhat)
+
+        dp = -(a.mass * dot(a.vel, rhat) - b.mass * dot(b.vel, rhat)) / a.mass / dt
+        dp *= 5e-4 * 1000
+        mul(rhat, dp)
+        add(a.acc, rhat)
+    end
+
 end
 
 function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float64) where {T}
@@ -111,13 +134,11 @@ function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float6
     end
     if isLeaf(tree)
         if a.tag != tree.center.tag
-            updateAcc(a, tree.center, G)
-            println(tree.center.tag)
+            updateAccL(a, tree.center, G)
         end
     else
         if tree.size / dist(tree.center.pos, a.pos) < theta
             updateAcc(a, tree.center, G)
-            println(tree.center.tag)
         else
             for i in tree.children
                 apply(a, i, theta, G, dt)

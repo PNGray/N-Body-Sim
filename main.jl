@@ -124,12 +124,12 @@ function main()
     for i in 0:n
         t = i * dt
         cycle_leapfrog(tree, bodies, dt, 0.3)
-        period_check(earth_sun, t)
-        if i % 10 == 0
+        # period_check(earth_sun, t)
+        if i % 50 == 0
             e = calculate_energy(bodies)
             # println(i)
             for j in bodies
-                showtrail(outfile, j)
+                show(outfile, j)
                 write(outfile, "\n")
             end
             @printf(outfile, "T -0.8 0.8\nt = %.2f", t)
