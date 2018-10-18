@@ -92,7 +92,14 @@ function updateVel(a::Body{T}, dt::Float64) where {T}
 end
 
 function updateAcc(a::Body{T}, b::Body{T}, G::Float64) where {T}
-    e = 0.0(radius(a) + radius(b))
+    e = 0.5(radius(a) + radius(b))
+    r = a.pos - b.pos
+    rlensqr = lensqr(r)
+    add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5) * r))
+end
+
+function updateAccL(a::Body{T}, b::Body{T}, G::Float64) where {T}
+    e = 0.5(radius(a) + radius(b))
     r = a.pos - b.pos
     rlensqr = lensqr(r)
     add(a.acc, -(G * b.mass / ((rlensqr + e^2)^1.5) * r))
@@ -105,10 +112,12 @@ function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float6
     if isLeaf(tree)
         if a.tag != tree.center.tag
             updateAcc(a, tree.center, G)
+            println(tree.center.tag)
         end
     else
         if tree.size / dist(tree.center.pos, a.pos) < theta
             updateAcc(a, tree.center, G)
+            println(tree.center.tag)
         else
             for i in tree.children
                 apply(a, i, theta, G, dt)

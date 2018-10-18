@@ -56,6 +56,15 @@ function cycle_leapfrog(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, the
     Threads.@threads for i in bodies
         apply(i, tree, theta, G, dt)
     end
+
+    Threads.@threads for i in bodies
+        l = len(i.pos)
+        bound = 15
+        if l > bound
+            add(i.acc, 50000 * (bound - l) / l * (i.pos))
+        end
+    end
+
     Threads.@threads for i in bodies
         updateVel(i, dt)
     end
@@ -118,7 +127,7 @@ function main()
         period_check(earth_sun, t)
         if i % 10 == 0
             e = calculate_energy(bodies)
-            println(i)
+            # println(i)
             for j in bodies
                 showtrail(outfile, j)
                 write(outfile, "\n")
