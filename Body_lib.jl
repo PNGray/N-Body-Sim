@@ -1,8 +1,8 @@
-module Bod_lib
+module Body_lib
 
-export Body, showtrail, radius, updatePos, updateVel, updateAccGas
 using Vec_lib
 using Printf
+export Body, showtrail, radius, updatePos, updateVel, updateAccGas
 
 mutable struct Body{T <: Vec}
     pos::T

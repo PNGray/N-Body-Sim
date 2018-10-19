@@ -1,7 +1,7 @@
 module Tree_lib
 
 using Vec_lib
-using Bod_lib
+using Body_lib
 export Tree, isLeaf, isEmpty, push, apply
 
 mutable struct Tree{T <: Vec}
