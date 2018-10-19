@@ -1,3 +1,6 @@
+module Vec_lib
+export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant
+
 abstract type Vec end
 #2d vector
 mutable struct Vec2d <: Vec
@@ -18,7 +21,7 @@ Base.:(==)(a::Vec2d, b::Vec2d) = a.x == b.x && a.y == b.y
 #These modify the first vector without creating a new one, faster than +, *
 add(a::Vec2d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
 mul(a::Vec2d, b::Float64) = begin a.x *= b; a.y *= b; end
-reset(a::Vec2d) = begin a.x = 0.0; a.y = 0.0; end
+Base.reset(a::Vec2d) = begin a.x = 0.0; a.y = 0.0; end
 
 
 dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y #dot product
@@ -119,7 +122,7 @@ Base.:(==)(a::Vec3d, b::Vec3d) = a.x == b.x && a.y == b.y && a.z == b.z
 add(a::Vec3d, b::Vec3d) = begin a.x += b.x; a.y += b.y; a.z += b.z; end
 add(a::Vec3d, b::Vec2d) = begin a.x += b.x; a.y += b.y; end
 mul(a::Vec3d, b::Float64) = begin a.x *= b; a.y *= b; a.z *= b; end
-reset(a::Vec3d) = begin a.x = 0.0; a.y = 0.0; a.z = 0.0 end
+Base.reset(a::Vec3d) = begin a.x = 0.0; a.y = 0.0; a.z = 0.0 end
 
 dot(a::Vec3d, b::Vec3d)::Float64 = a.x * b.x + a.y * b.y + a.z * b.z
 cross(a::Vec3d, b::Vec3d)::Vec3d = Vec3d(a.y * b.z - b.y * a.z, a.z * b.x - b.z * a.x, a.x * b.y - b.x * a.y)
@@ -135,4 +138,6 @@ function quadrant(a::Vec3d)::UInt
     else
         return quad + 4
     end
+end
+
 end

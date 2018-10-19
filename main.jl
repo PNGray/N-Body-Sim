@@ -1,6 +1,10 @@
-include("body.jl")
+push!(LOAD_PATH, pwd())
+using Vec_lib
+using Bod_lib
+using Tree_lib
+using Printf
 
-const G = 1.0#4(π^2)
+const G = 4(π^2)
 const dt = 0.001
 
 mutable struct Pair{T}
@@ -121,7 +125,8 @@ function main()
     n = parse(Int, ARGS[4])
     tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
     earth_sun = Pair(bodies[1], bodies[2], -1.0, 0.0, 0.0, false)
-    e = 0
+    e = calculate_energy(bodies)
+    e0 = e
 
     for j in bodies
         show(outfile, j)
@@ -137,8 +142,9 @@ function main()
         t = i * dt
         cycle_leapfrog(tree, bodies, dt, 0.3)
         # period_check(earth_sun, t)
-        if i % 10 == 0
+        if i % 100 == 0
             # e = calculate_energy(bodies)
+            # @printf("%f %e %f\n", t, (e0 - e), earth_sun.T)
             println(i)
             for j in bodies
                 show(outfile, j)
@@ -154,6 +160,7 @@ function main()
 end
 
 println(ARGS)
+println(pwd())
 if length(ARGS) == 0
     println("infile outfile dim iterations")
 else

@@ -1,5 +1,7 @@
-include("body.jl")
-
+push!(LOAD_PATH, pwd())
+using Vec_lib
+using Bod_lib
+using Printf
 
 function generate3d(infile::IO, bodies::Vector{Body{Vec3d}})
     str = read(infile, String)
@@ -51,7 +53,7 @@ function main()
 
         vel += jiggle * randn(T) * vecflat
         z = jiggle * randn(T)
-        push!(bodies, Body(vec, Vec3d(vel.x, vel.y, z), ORIGIN3, 0.5, 1))
+        push!(bodies, Body(vec, Vec3d(vel.x, vel.y, z), Vec3d(0.0, 0.0, 0.0), 0.5, 1))
         #println("$(vec.x) $(vec.y) $(vec.z) $(vel.x) $(vel.y) $z 0.08")
     end
 
