@@ -1,6 +1,6 @@
 push!(LOAD_PATH, pwd())
 using Vec_lib
-using Bod_lib
+using Body_lib
 using Printf
 
 function generate3d(infile::IO, bodies::Vector{Body{Vec3d}})
