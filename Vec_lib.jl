@@ -1,5 +1,5 @@
 module Vec_lib
-export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant
+export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant, quad1, quad3_7
 
 abstract type Vec end
 #2d vector
@@ -32,7 +32,7 @@ dist(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
 midPoint(a::Vec2d, b::Vec2d) = (a + b) / 2
 
 #return the quadrant of the point in space
-function quadrant(a::Vec2d)::UInt
+function quadrant(a::Vec2d)::Int
     if a.x < 0
         if a.y < 0
             return 3
@@ -48,8 +48,13 @@ function quadrant(a::Vec2d)::UInt
     end
 end
 
+function quad1(a::Vec2d)::Bool
+    a.x > 0 && a.y >= 0
+end
 
-
+function quad3_7(a::Vec2d)::Bool
+    a.x <= 0 && a.y < 0
+end
 
 #2d line
 mutable struct Line2d
@@ -131,7 +136,7 @@ lensqr(a::Vec3d) = a.x^2 + a.y^2 + a.z^2
 dist(a::Vec3d, b::Vec3d) = len(a - b)
 midPoint(a::Vec3d, b::Vec3d) = (a + b) / 2
 
-function quadrant(a::Vec3d)::UInt
+function quadrant(a::Vec3d)::Int
     quad = quadrant(Vec2d(a.x, a.y))
     if a.z >= 0
         return quad
@@ -141,3 +146,10 @@ function quadrant(a::Vec3d)::UInt
 end
 
 end
+
+function quad1(a::Vec3d)::Bool
+    a.x > 0 && a.y > 0 && a.z > 0
+end
+
+function quad3_7(a::Vec3d)::Bool
+    a.x >= 0 && a.y >=0 && a.z >= 0

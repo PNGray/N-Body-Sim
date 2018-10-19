@@ -48,7 +48,7 @@ function generate3d(infile::IO)
     bodies
 end
 
-function cycle_leapfrog(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
+function cycle_leapfrog_tree(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
     tree.children = Vector{Tree{T}}()
     tree.center = nothing
     Threads.@threads for i in bodies
@@ -63,7 +63,7 @@ function cycle_leapfrog(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, the
 
     Threads.@threads for i in bodies
         l = len(i.pos)
-        bound = 15
+        bound = 6
         if l > bound
             add(i.acc, 50000 * (bound - l) / l * (i.pos))
         end
@@ -140,7 +140,7 @@ function main()
 
     for i in 1:n
         t = i * dt
-        cycle_leapfrog(tree, bodies, dt, 0.3)
+        cycle_leapfrog_tree(tree, bodies, dt, 0.3)
         # period_check(earth_sun, t)
         if i % 100 == 0
             # e = calculate_energy(bodies)
