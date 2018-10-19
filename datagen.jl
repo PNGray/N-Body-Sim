@@ -51,7 +51,7 @@ function main()
         # mul(vel, 1 / len(vecflat)^(1.5 + (avg - len(vecflat)) / 75size))
         mul(vel, 0000.0^0.5)
 
-        vel += jiggle * randn(T) * vecflat
+        vel += jiggle * Vec2d(randn(T), randn(T))
         z = jiggle * randn(T)
         push!(bodies, Body(vec, Vec3d(vel.x, vel.y, z), Vec3d(0.0, 0.0, 0.0), 0.5, 1))
         #println("$(vec.x) $(vec.y) $(vec.z) $(vel.x) $(vel.y) $z 0.08")
