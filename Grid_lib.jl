@@ -219,6 +219,14 @@ function cycle_leapfrog_grid(box::Array{Grid{T}}, bodies::Vector{Body{T}}, dt::F
     end
 
     Threads.@threads for i in bodies
+        l = len(i.pos)
+        bound = size / 2 - 1
+        if l > bound
+            add(i.acc, 50000 * (bound - l) / l * (i.pos))
+        end
+    end
+
+    Threads.@threads for i in bodies
         updateVel(i, dt)
     end
 
