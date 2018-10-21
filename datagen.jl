@@ -3,21 +3,6 @@ using Vec_lib
 using Body_lib
 using Printf
 
-function generate3d(infile::IO, bodies::Vector{Body{Vec3d}})
-    str = read(infile, String)
-    list = map(x->split(x, " "), split(str, "\n"))
-    for i in 1:length(list)
-        if length(list[i]) < 7
-            continue
-        end
-        elems = map(x->parse(Float64, x), list[i])
-        pos = Vec3d(elems[1], elems[2], elems[3])
-        vel = Vec3d(elems[4], elems[5], elems[6])
-        mass = elems[7]
-        push!(bodies, Body(pos, vel, Vec3d(0.0, 0.0, 0.0), mass, i))
-    end
-    bodies
-end
 function main()
     bodies::Vector{Body{Vec3d}} = []
     if length(ARGS) >= 4

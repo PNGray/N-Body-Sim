@@ -1,5 +1,5 @@
 module Vec_lib
-export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant, quad1, quad3_7
+export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant, num_dim, quad_relative
 
 abstract type Vec end
 #2d vector
@@ -10,6 +10,7 @@ mutable struct Vec2d <: Vec
     Vec2d(a, b) = new(a, b)
     Vec2d(a) = new(a, a)
 end
+
 const ORIGIN2 = Vec2d(0.0, 0.0)
 Base.:+(a::Vec2d, b::Vec2d) = Vec2d(a.x + b.x, a.y + b.y)
 Base.:-(a::Vec2d, b::Vec2d) = Vec2d(a.x - b.x, a.y - b.y)
@@ -32,15 +33,15 @@ dist(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
 midPoint(a::Vec2d, b::Vec2d) = (a + b) / 2
 
 #return the quadrant of the point in space
-function quadrant(a::Vec2d)::Int
-    if a.x < 0
-        if a.y < 0
+function quadrant(a::Vec2d, b::Vec2d)::Int
+    if a.x < b.x
+        if a.y < b.y
             return 3
         else
             return 2
         end
     else
-        if a.y < 0
+        if a.y < b.y
             return 4
         else
             return 1
@@ -48,12 +49,20 @@ function quadrant(a::Vec2d)::Int
     end
 end
 
-function quad1(a::Vec2d)::Bool
-    a.x > 0 && a.y >= 0
-end
-
-function quad3_7(a::Vec2d)::Bool
-    a.x <= 0 && a.y < 0
+function quad_relative(a::Vec2d, b::Vec2d)::Tuple{Int, Int}
+    if a.x < b.x
+        if a.y < b.y
+            return (-1, -1)
+        else
+            return (-1, 1)
+        end
+    else
+        if a.y < b.y
+            return (1, -1)
+        else
+            return (1, 1)
+        end
+    end
 end
 
 #2d line
@@ -136,20 +145,78 @@ lensqr(a::Vec3d) = a.x^2 + a.y^2 + a.z^2
 dist(a::Vec3d, b::Vec3d) = len(a - b)
 midPoint(a::Vec3d, b::Vec3d) = (a + b) / 2
 
-function quadrant(a::Vec3d)::Int
-    quad = quadrant(Vec2d(a.x, a.y))
-    if a.z >= 0
-        return quad
+function quadrant(a::Vec3d, b::Vec3d)::Int
+    if a.z < b.z
+        if a.x < b.x
+            if a.y < b.y
+                return 7
+            else
+                return 6
+            end
+        else
+            if a.y < b.y
+                return 8
+            else
+                return 5
+            end
+        end
     else
-        return quad + 4
+        if a.x < b.x
+            if a.y < b.y
+                return 3
+            else
+                return 2
+            end
+        else
+            if a.y < b.y
+                return 4
+            else
+                return 1
+            end
+        end
+    end
+end
+
+function quad_relative(a::Vec3d, b::Vec3d)::Tuple{Int, Int, Int}
+    if a.z < b.z
+        if a.x < b.x
+            if a.y < b.y
+                return (-1, -1, -1)
+            else
+                return (-1, 1, -1)
+            end
+        else
+            if a.y < b.y
+                return (1, -1, -1)
+            else
+                return (1, 1, -1)
+            end
+        end
+    else
+        if a.x < b.x
+            if a.y < b.y
+                return (-1, -1, 1)
+            else
+                return (-1, 1, 1)
+            end
+        else
+            if a.y < b.y
+                return (1, -1, 1)
+            else
+                return (1, 1, 1)
+            end
+        end
+    end
+end
+
+num_dim(t::DataType)::Int = begin
+    if t == Vec2d
+        return 2
+    elseif t == Vec3d
+        return 3
+    else
+        return 0
     end
 end
 
 end
-
-function quad1(a::Vec3d)::Bool
-    a.x > 0 && a.y > 0 && a.z > 0
-end
-
-function quad3_7(a::Vec3d)::Bool
-    a.x >= 0 && a.y >=0 && a.z >= 0

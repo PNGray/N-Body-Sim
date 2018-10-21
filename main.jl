@@ -2,10 +2,13 @@ push!(LOAD_PATH, pwd())
 using Vec_lib
 using Body_lib
 using Tree_lib
+using Grid_lib
 using Printf
 
 const G = 4(π^2)
 const dt = 0.001
+const theta = 0.3
+const pad = 2.0
 
 mutable struct Pair{T}
     a::Body{T}
@@ -14,67 +17,6 @@ mutable struct Pair{T}
     t_last::Float64
     T::Float64
     halfs::Bool
-end
-
-function generate2d(infile::IO)
-    str = read(infile, String)
-    list = map(x->split(x, " "), split(str, "\n"))
-    T = Vec2d
-    bodies::Vector{Body{T}} = []
-    for i in 1:length(list)
-        if length(list[i]) < 5 continue end
-        elems = map(x->parse(Float64, x), list[i])
-        pos = Vec2d(elems[1], elems[2])
-        vel = Vec2d(elems[3], elems[4])
-        mass = elems[5]
-        push!(bodies, Body(pos, vel, Vec2d(0.0, 0.0), mass, i))
-    end
-    bodies
-end
-
-function generate3d(infile::IO)
-    str = read(infile, String)
-    list = map(x->split(x, " "), split(str, "\n"))
-    T = Vec3d
-    bodies::Vector{Body{T}} = []
-    for i in 1:length(list)
-        if length(list[i]) < 7 continue end
-        elems = map(x->parse(Float64, x), list[i])
-        pos = Vec3d(elems[1], elems[2], elems[3])
-        vel = Vec3d(elems[4], elems[5], elems[6])
-        mass = elems[7]
-        push!(bodies, Body(pos, vel, Vec3d(0.0, 0.0, 0.0), mass, i))
-    end
-    bodies
-end
-
-function cycle_leapfrog_tree(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, theta::Float64) where {T}
-    tree.children = Vector{Tree{T}}()
-    tree.center = nothing
-    Threads.@threads for i in bodies
-        updatePos(i, 0.5dt)
-    end
-    for i in bodies
-        push(tree, i)
-    end
-    Threads.@threads for i in bodies
-        apply(i, tree, theta, G, dt)
-    end
-
-    Threads.@threads for i in bodies
-        l = len(i.pos)
-        bound = 6
-        if l > bound
-            add(i.acc, 50000 * (bound - l) / l * (i.pos))
-        end
-    end
-
-    Threads.@threads for i in bodies
-        updateVel(i, dt)
-    end
-    Threads.@threads for i in bodies
-        updatePos(i, 0.5dt)
-    end
 end
 
 function period_check(p::Pair, t::Float64)
@@ -91,7 +33,7 @@ function period_check(p::Pair, t::Float64)
     end
 end
 
-function calculate_energy(bodies::Vector{Body{T}}) where {T}
+function calculate_energy_gravity(bodies::Vector{Body{T}}) where {T}
     energy = 0
     for i in bodies
         energy += 0.5i.mass * lensqr(i.vel)
@@ -122,11 +64,20 @@ function main()
     else
         bodies = generate3d(infile)
     end
-    n = parse(Int, ARGS[4])
-    tree = Tree{T}(T(-250.0, -250.0, -250.0), 500.0, Vector{Tree{T}}(), nothing)
+    step_num = parse(Int, ARGS[4])
+    size = parse(Float64, ARGS[5])
+
+    tree::Tree{T} = Tree{T}(T(-size / 2), size, Vector{Tree{T}}(), nothing)
+
+    n = convert(Int, div(size, pad))
+    gridsize = size / n
+    box::Array{Grid{T}, num_dim(T)} = make_box(T(-size / 2), size, n)
+    init_grid(box, bodies)
+
     earth_sun = Pair(bodies[1], bodies[2], -1.0, 0.0, 0.0, false)
-    e = calculate_energy(bodies)
-    e0 = e
+    e = 0
+    # e = calculate_energy_gravity(bodies)
+    # e0 = e
 
     for j in bodies
         show(outfile, j)
@@ -138,12 +89,13 @@ function main()
     write(outfile, "F\n")
     flush(outfile)
 
-    for i in 1:n
+    for i in 1:step_num
         t = i * dt
-        cycle_leapfrog_tree(tree, bodies, dt, 0.3)
+        # cycle_leapfrog_tree(tree, bodies, dt, G, theta, size)
+        cycle_leapfrog_grid(box, bodies, dt, size, gridsize)
         # period_check(earth_sun, t)
         if i % 100 == 0
-            # e = calculate_energy(bodies)
+            # e = calculate_energy_gravity(bodies)
             # @printf("%f %e %f\n", t, (e0 - e), earth_sun.T)
             println(i)
             for j in bodies

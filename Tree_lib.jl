@@ -2,7 +2,7 @@ module Tree_lib
 
 using Vec_lib
 using Body_lib
-export Tree, isLeaf, isEmpty, push, apply
+export Tree, cycle_leapfrog_tree
 
 mutable struct Tree{T <: Vec}
     origin::T
@@ -14,7 +14,7 @@ end
 isLeaf(tree::Tree)::Bool = length(tree.children) == 0
 isEmpty(tree::Tree)::Bool = tree.center == nothing
 
-function push(tree::Tree{T}, a::Body{T}) where {T}
+function push_tree(tree::Tree{T}, a::Body{T}) where {T}
     if isLeaf(tree)
         if isEmpty(tree)
             tree.center = a
@@ -23,13 +23,13 @@ function push(tree::Tree{T}, a::Body{T}) where {T}
             tree.center = a + b
             tree.children::Vector{Tree{T}} = spawnChildren(tree.origin, tree.size)
             middle::T = tree.children[1].origin
-            push(tree.children[quadrant(a.pos - middle)], a)
-            push(tree.children[quadrant(b.pos - middle)], b)
+            push_tree(tree.children[quadrant(a.pos, middle)], a)
+            push_tree(tree.children[quadrant(b.pos, middle)], b)
         end
     else
         middle = tree.children[1].origin
         add(tree.center, a)
-        push(tree.children[quadrant(a.pos - middle)], a)
+        push_tree(tree.children[quadrant(a.pos, middle)], a)
     end
 end
 
@@ -100,18 +100,48 @@ function apply(a::Body{T}, tree::Tree{T}, theta::Float64, G::Float64, dt::Float6
         return
     end
     if isLeaf(tree)
-        if a.tag != tree.center.tag
+        if a !== tree.center
             # updateAccL(a, tree.center, G, dt)
-            updateAccGas(a, tree.center)
+            updateAcc(a, tree.center, G)
+            # updateAccGas(a, tree.center)
         end
     else
         if tree.size / dist(tree.center.pos, a.pos) < theta
-            # updateAcc(a, tree.center, G)
+            updateAcc(a, tree.center, G)
         else
             for i in tree.children
                 apply(a, i, theta, G, dt)
             end
         end
+    end
+end
+
+function cycle_leapfrog_tree(tree::Tree{T}, bodies::Vector{Body{T}}, dt::Float64, G::Float64, theta::Float64, size::Float64) where {T}
+    tree.children = Vector{Tree{T}}()
+    tree.center = nothing
+    Threads.@threads for i in bodies
+        updatePos(i, 0.5dt)
+    end
+    for i in bodies
+        push_tree(tree, i)
+    end
+    Threads.@threads for i in bodies
+        apply(i, tree, theta, G, dt)
+    end
+
+    # Threads.@threads for i in bodies
+    #     l = len(i.pos)
+    #     bound = size / 2 - 2
+    #     if l > bound
+    #         add(i.acc, 50000 * (bound - l) / l * (i.pos))
+    #     end
+    # end
+
+    Threads.@threads for i in bodies
+        updateVel(i, dt)
+    end
+    Threads.@threads for i in bodies
+        updatePos(i, 0.5dt)
     end
 end
 
