@@ -7,7 +7,7 @@ using Printf
 const G = 4(π^2)
 const dt = 0.001
 const theta = 0.3
-const pad = 5.0 * r0
+const size = 100.0
 
 mutable struct Pair{T}
     a::Body{T}
@@ -66,11 +66,9 @@ function main()
         bodies = generate3d(infile)
     end
     step_num = parse(Int, ARGS[4])
-    size = parse(Float64, ARGS[5])
 
     tree::Tree{T} = Tree{T}(T(-size / 2), size, Vector{Tree{T}}(), nothing)
 
-    n = convert(Int, div(size, pad))
     origin = T(-size / 2)
 
     earth_sun = Pair(bodies[1], bodies[2], -1.0, 0.0, 0.0, false)
@@ -93,7 +91,7 @@ function main()
         t = i * dt
         cycle_leapfrog_tree(tree, bodies, dt, G, theta, size)
         # period_check(earth_sun, t)
-        if i % 100 == 0
+        if i % 10 == 0
             # e = calculate_energy_gravity(bodies)
             # @printf("%f %e %f\n", t, (e0 - e), earth_sun.T)
             println(i)
