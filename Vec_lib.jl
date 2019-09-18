@@ -1,5 +1,5 @@
 module Vec_lib
-export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant, num_dim, quad_relative
+export Vec, Vec2d, Vec3d, add, mul, dot, cross, len, lensqr, dist, midPoint, quadrant, num_dim, quad_relative, quad1, quad3_7
 
 abstract type Vec end
 #2d vector
@@ -27,8 +27,8 @@ Base.reset(a::Vec2d) = begin a.x = 0.0; a.y = 0.0; end
 
 dot(a::Vec2d, b::Vec2d)::Float64 = a.x * b.x + a.y * b.y #dot product
 cross(a::Vec2d, b::Vec2d)::Float64 = a.x * b.y - a.y * b.x #cross product
-len(a::Vec2d) = sqrt(a.x^2 + a.y^2) #lenght of vector
-lensqr(a::Vec2d) = a.x^2 + a.y^2 #len^2, for optimization
+lensqr(a::Vec2d) = a.x * a.x + a.y * a.y #len^2, for optimization
+len(a::Vec2d) = sqrt(lensqr(a)) #lenght of vector
 dist(a::Vec2d, b::Vec2d) = len(a - b) #distance between two points
 midPoint(a::Vec2d, b::Vec2d) = (a + b) / 2
 
@@ -63,6 +63,14 @@ function quad_relative(a::Vec2d, b::Vec2d)::Tuple{Int, Int}
             return (1, 1)
         end
     end
+end
+
+function quad1(a::Vec2d, b::Vec2d)::Bool
+    a.x > b.x && a.y > b.y
+end
+
+function quad3_7(a::Vec2d, b::Vec2d)::Bool
+    a.x <= b.x && a.y <= b.y
 end
 
 #2d line
@@ -140,8 +148,8 @@ Base.reset(a::Vec3d) = begin a.x = 0.0; a.y = 0.0; a.z = 0.0 end
 
 dot(a::Vec3d, b::Vec3d)::Float64 = a.x * b.x + a.y * b.y + a.z * b.z
 cross(a::Vec3d, b::Vec3d)::Vec3d = Vec3d(a.y * b.z - b.y * a.z, a.z * b.x - b.z * a.x, a.x * b.y - b.x * a.y)
-len(a::Vec3d) = sqrt(a.x^2 + a.y^2 + a.z^2)
-lensqr(a::Vec3d) = a.x^2 + a.y^2 + a.z^2
+lensqr(a::Vec3d) = a.x * a.x + a.y * a.y + a.z * a.z
+len(a::Vec3d) = sqrt(lensqr(a))
 dist(a::Vec3d, b::Vec3d) = len(a - b)
 midPoint(a::Vec3d, b::Vec3d) = (a + b) / 2
 
@@ -207,6 +215,14 @@ function quad_relative(a::Vec3d, b::Vec3d)::Tuple{Int, Int, Int}
             end
         end
     end
+end
+
+function quad1(a::Vec3d, b::Vec3d)::Bool
+    a.x > b.x && a.y > b.y && a.z > b.z
+end
+
+function quad3_7(a::Vec3d, b::Vec3d)::Bool
+    a.x <= b.x && a.y <= b.y && a.z <= b.z
 end
 
 num_dim(t::DataType)::Int = begin

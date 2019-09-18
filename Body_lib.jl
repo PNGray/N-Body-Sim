@@ -66,7 +66,7 @@ function generate3d(infile::IO)
         pos = Vec3d(elems[1], elems[2], elems[3])
         vel = Vec3d(elems[4], elems[5], elems[6])
         mass = elems[7]
-        push!(bodies, Body(pos, vel, Vec3d(0.0, 0.0, 0.0), mass, i))
+        push!(bodies, Body(pos, vel, Vec3d(0.0, 0.0, 0.0), mass, 2))
     end
     bodies
 end

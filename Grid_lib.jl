@@ -3,156 +3,131 @@ module Grid_lib
 using Vec_lib
 using Body_lib
 using Linked_list
+using Printf
 
-export Grid, check_grid, update_grid, make_box, init_grid, cycle_leapfrog_grid
+export Grid, check_grid, update_grid, make_box, init_grid, cycle_leapfrog_grid, r0, apply
 
-struct Grid{T <: Vec}
-    origin::T
-    op_corner::T
-    elements::Link{Body{T}}
-    buffer::Vector{Link{Body{T}}}
-    Grid(origin, size) = begin
-        T = typeof(origin)
-        x = new{T}(origin, origin + T(size), Link{Body{T}}(), Vector{Link{Body{T}}}())
+mutable struct Grid{T}
+    elements::Link{T}
+    buffer::Vector{Link{T}}
+    buffered::Bool
+    Grid{T}() where {T} = begin
+        x = new{T}(Link{T}(), Vector{Link{T}}(), false)
         for i in 1:Threads.nthreads()
-            push!(x.buffer, Link{Body{T}}())
+            push!(x.buffer, Link{T}())
         end
         return x
     end
 end
 
-function check_grid(box::Array{Grid{Vec2d}, 2})
-    (sx, sy) = strides(box)
-    Threads.@threads for n in eachindex(box)
-        threadid = Threads.threadid()
-        new = n
-        grid = box[n]
-        current = grid.elements.next
-        while !(current === grid.elements)
-            next = current.next
-            (x1, y1) = quad_relative(current.val.pos, grid.origin)
-            (x2, y2) = quad_relative(current.val.pos, grid.op_corner)
-            x_offset = div(x1 + x2, 2)
-            y_offset = div(y1 + y2, 2)
-            if x_offset != 0 || x_offset != 0
-                remove_link(current)
-                new += x_offset * sx + y_offset * sy
-                new_grid = box[new]
-                current.val.tag = new
-                push_link(new_grid.buffer[threadid], current)
-            end
-            current = next
-        end
-    end
+function getzone(pos::Vec3d, n::Int64, gridsize::Float64, origin::Vec3d)::Int
+    v = pos - origin
+    (a, b, c) = (1, n, n * n)
+    resx = floor(v.x / gridsize)
+    resy = floor(v.y / gridsize)
+    resz = floor(v.z / gridsize)
+    resx = min(resx, b - 1)
+    resy = min(resy, b - 1)
+    resz = min(resz, b - 1)
+    resx = max(resx, 0)
+    resy = max(resy, 0)
+    resz = max(resz, 0)
+    n = 1 + a * resx + b * resy + c * resz
+    n
 end
 
-function check_grid(box::Array{Grid{Vec3d}, 3})
+function check_grid(box::Array{Grid{Body{Vec3d}}, 3}, gridsize::Float64, origin::Vec3d)
     (sx, sy, sz) = strides(box)
     Threads.@threads for n in eachindex(box)
         threadid = Threads.threadid()
-        new = n
         grid = box[n]
         current = grid.elements.next
         while !(current === grid.elements)
             next = current.next
-            (x1, y1, z1) = quad_relative(current.val.pos, grid.origin)
-            (x2, y2, z2) = quad_relative(current.val.pos, grid.op_corner)
-            x_offset = div(x1 + x2, 2)
-            y_offset = div(y1 + y2, 2)
-            z_offset = div(z1 + z2, 2)
-            if x_offset != 0 || x_offset != 0 || z_offset != 0
+            new = getzone(current.val.pos, sy, gridsize, origin)
+            if new != n
                 remove_link(current)
-                new += x_offset * sx + y_offset * sy + z_offset * sz
                 new_grid = box[new]
                 current.val.tag = new
                 push_link(new_grid.buffer[threadid], current)
+                new_grid.buffered = true
             end
             current = next
         end
     end
+    return
+end
+
+function check_grid(box::Array{Grid{Int64}, 3}, pos::Vector{Vec3d}, gridsize::Float64, origin::Vec3d)
+    (sx, sy, sz) = strides(box)
+    Threads.@threads for n in eachindex(box)
+        threadid = Threads.threadid()
+        grid = box[n]
+        current = grid.elements.next
+        while !(current === grid.elements)
+            next = current.next
+            new = getzone(pos[current.val], sy, gridsize, origin)
+            if new != n
+                remove_link(current)
+                new_grid = box[new]
+                push_link(new_grid.buffer[threadid], current)
+                new_grid.buffered = true
+            end
+            current = next
+        end
+    end
+    return
 end
 
 function update_grid(box::Array{Grid{T}}) where {T}
     Threads.@threads for n in box
-        for i in n.buffer
-            concat(n.elements, i)
+        if n.buffered
+            n.buffered = false
+            for i in n.buffer
+                concat(n.elements, i)
+            end
         end
     end
+    return
 end
 
-function make_box(origin::Vec2d, size::Float64, n::Int64)::Array{Grid{Vec2d}, 2}
+function make_box(T::DataType, size::Float64, n::Int64)::Array{Grid{T}, 3}
     pad = size / n
-    padx = Vec2d(pad, 0)
-    pady = Vec2d(0, pad)
-    box = Array{Grid{Vec2d}}(undef, n, n)
-    for j in 1:n
-        oriy = origin + ((j - 1.0) * pady)
-        for i in 1:n
-            orix = oriy + ((i - 1.0) * padx)
-            box[i, j] = Grid(orix, pad)
-        end
-    end
-    box
-end
-
-function make_box(origin::Vec3d, size::Float64, n::Int64)::Array{Grid{Vec3d}, 3}
-    pad = size / n
-    padx = Vec3d(pad, 0, 0)
-    pady = Vec3d(0, pad, 0)
-    padz = Vec3d(0, 0, pad)
-    box = Array{Grid{Vec3d}}(undef, n, n, n)
+    box = Array{Grid{T}}(undef, n, n, n)
     for k in 1:n
-        oriz = origin + ((k - 1.0) * padz)
         for j in 1:n
-            oriy = oriz + ((j -1.0) * pady)
             for i in 1:n
-                orix = oriy + ((i - 1.0) * padx)
-                box[i, j, k] = Grid(orix, pad)
+                box[i, j, k] = Grid{T}()
             end
         end
     end
     box
 end
 
-function push_grid(box::Array{Grid{Vec2d}, 2}, b::Body{Vec2d})
-    for n in eachindex(box)
-        i = box[n]
-        (x1, y1) = quad_relative(b.pos, i.origin)
-        (x2, y2) = quad_relative(b.pos, i.op_corner)
-        x_offset = x1 + x2
-        y_offset = y1 + y2
-        if x_offset == 0 && y_offset == 0
-            b.tag = n
-            push_link(i.buffer[Threads.threadid()], Link{Body{Vec2d}}(b))
-            break
-        end
-    end
-end
-
-function push_grid(box::Array{Grid{Vec3d}, 3}, b::Body{Vec3d})
-    for n in eachindex(box)
-        i = box[n]
-        (x1, y1, z1) = quad_relative(b.pos, i.origin)
-        (x2, y2, z2) = quad_relative(b.pos, i.op_corner)
-        x_offset = x1 + x2
-        y_offset = y1 + y2
-        z_offset = z1 + z2
-        if x_offset == 0 && y_offset == 0 && z_offset == 0
-            b.tag = n
-            push_link(i.buffer[Threads.threadid()], Link{Body{Vec3d}}(b))
-            break
-        end
-    end
-end
-
-function init_grid(box::Array{Grid{T}}, bs::Vector{Body{T}}) where {T}
+function init_grid(box::Array{Grid{Body{T}}}, bs::Vector{Body{T}}, gridsize::Float64, origin::T) where {T}
     Threads.@threads for i in bs
-        push_grid(box, i)
+        zone = getzone(i.pos, size(box, 1), gridsize, origin)
+        grid = box[zone]
+        i.tag = zone
+        push_link(grid.buffer[Threads.threadid()], Link{Body{T}}(i))
+        grid.buffered = true
     end
     update_grid(box)
+    return
 end
 
-Base.show(io::IO, grid::Grid{T}) where T = println(io, "Grid: Origin: ", grid.origin, ", Op_corner: ", grid.op_corner)
+function init_grid(box::Array{Grid{Int64}}, pos::Vector{Vec3d}, gridsize::Float64, origin::Vec3d)
+    Threads.@threads for i in eachindex(pos)
+        zone = getzone(pos[i], size(box, 1), gridsize, origin)
+        grid = box[zone]
+        push_link(grid.buffer[Threads.threadid()], Link{Int64}(i))
+        grid.buffered = true
+    end
+    update_grid(box)
+    return
+end
+
+Base.show(io::IO, grid::Grid{T}) where T = println(io, "Grid: ", pointer_from_objref(grid))
 
 const r0 = 0.15
 const r02 = r0^2
@@ -164,53 +139,93 @@ function updateAccGas(a::Body{T}, b::Body{T}, gridsize::Float64) where {T}
         return
     end
     runitsqr = rlensqr / r02
-    f = 24(2 / runitsqr^7 - 1 / runitsqr^4) / r0
+    runit6 = runitsqr * runitsqr * runitsqr
+    runit8 = runit6 * runitsqr
+    runit14 = runit6 * runit8
+    f = 24(2 / runit14 - 1 / runit8) / r0
     add(a.acc, f * r)
+    return
 end
 
-function apply(box::Array{Grid{T}}, b::Body{T}, gridsize::Float64) where {T}
-    grid = box[b.tag]
-    len = length(box)
+function updateAccGas(p1::Vec3d, a::Vec3d, p2::Vec3d, gridsize::Float64)
+    r = p1 - p2
+    rlensqr = lensqr(r)
+    if rlensqr > gridsize * gridsize
+        return
+    end
+    runitsqr = rlensqr / r02
+    runit6 = runitsqr * runitsqr * runitsqr
+    runit8 = runit6 * runitsqr
+    runit14 = runit6 * runit8
+    f = 24(2 / runit14 - 1 / runit8) / r0
+    add(a, f * r)
+    return
+end
+
+function apply_grid(grid::Grid{T}, b::T, gridsize::Float64) where {T}
     current = grid.elements.next
     while current !== grid.elements
         if current.val !== b
-            updateAccGas(b, current.val, gridsize)
+          updateAccGas(b, current.val, gridsize)
         end
+
         current = current.next
     end
+    return
+end
 
-    for i in strides(box)
-        n = b.tag
-        upper = n + i
-        lower = n - i
-        if upper <= len
-            grid = box[upper]
-            current = grid.elements.next
-            # showloop(stdout, current)
-            # println()
-            while current !== grid.elements
-                updateAccGas(b, current.val, gridsize)
-                current = current.next
-            end
+function apply_grid(grid::Grid{Int64}, i::Int64, ps::Vector{Vec3d}, as::Vector{Vec3d}, gridsize::Float64)
+    current = grid.elements.next
+    while current !== grid.elements
+        if current.val !== i
+          updateAccGas(ps[i], as[i], ps[current.val], gridsize)
         end
 
-        if lower >= 1
-            grid = box[lower]
-            current = grid.elements.next
-            while current !== grid.elements
-                updateAccGas(b, current.val, gridsize)
-                current = current.next
+        current = current.next
+    end
+    return
+end
+
+function apply(box::Array{Grid{Body{Vec3d}}, 3}, b::Body{Vec3d}, gridsize::Float64)
+    len = length(box)
+    n = b.tag
+    (x, y, z) = strides(box)
+    for k in -1:1
+        for j in -1:1
+            for i in -1:1
+                n_current = n + x * i + y * j + z * k
+                if n_current >=1 && n_current <= len
+                    apply_grid(box[n_current], b, gridsize)
+                end
             end
         end
     end
+    return
 end
 
-function cycle_leapfrog_grid(box::Array{Grid{T}}, bodies::Vector{Body{T}}, dt::Float64, size::Float64, gridsize::Float64) where {T}
+function apply(box::Array{Grid{Int64}, 3}, n::Int64, ps::Vector{Vec3d}, as::Vector{Vec3d}, gridsize::Float64, origin::Vec3d)
+    len = length(box)
+    (x, y, z) = strides(box)
+    n = getzone(ps[n], y, gridsize, origin)
+    for k in -1:1
+        for j in -1:1
+            for i in -1:1
+                n_current = n + x * i + y * j + z * k
+                if n_current >=1 && n_current <= len
+                    apply_grid(box[n_current], n, ps, as, gridsize)
+                end
+            end
+        end
+    end
+    return
+end
+
+function cycle_leapfrog_grid(box::Array{Grid{T}}, bodies::Vector{T}, dt::Float64, size::Float64, gridsize::Float64, origin::Vec3d) where {T}
     Threads.@threads for i in bodies
         updatePos(i, 0.5dt)
     end
 
-    check_grid(box)
+    check_grid(box, gridsize, origin)
 
     update_grid(box)
 
@@ -223,6 +238,7 @@ function cycle_leapfrog_grid(box::Array{Grid{T}}, bodies::Vector{Body{T}}, dt::F
         bound = size / 2 - 1
         if l > bound
             add(i.acc, 50000 * (bound - l) / l * (i.pos))
+            mul(i.vel, 0.9)
         end
     end
 
@@ -233,6 +249,7 @@ function cycle_leapfrog_grid(box::Array{Grid{T}}, bodies::Vector{Body{T}}, dt::F
     Threads.@threads for i in bodies
         updatePos(i, 0.5dt)
     end
+    return
 end
 
 end

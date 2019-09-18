@@ -95,7 +95,7 @@ function main()
     ex = false
     for i in 1:step_num
         t = i * dt
-        # cycle_leapfrog_tree(tree, bodies, dt, G, theta, size)
+        cycle_leapfrog_tree(tree, bodies, dt, G, theta, size)
         cycle_leapfrog_grid(box, bodies, dt, size, gridsize, origin)
         # period_check(earth_sun, t)
         if i % 100 == 0

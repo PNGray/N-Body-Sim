@@ -10,19 +10,20 @@ mutable struct Link{T}
     Link{T}() where T= (x = new{T}(); x.next = x; x.prev = x; x)
 end
 
-Base.show(io::IO, l::Link) = begin
+show_link(io::IO, l::Link) = begin
     if isdefined(l, :val)
-        println(io, l.val)
+        print(io, l.val, " ")
     else
-        print(io, "#undef")
+        print(io, "#undef ")
     end
+    return
 end
 
-showloop(io::IO, l::Link) = begin
-    print(io, l, " ")
+Base.show(io::IO, l::Link) = begin
+    show_link(io, l)
     current = l.next
     while current !== l
-        print(io, current, " ")
+        show_link(io, current)
         current = current.next
     end
 end
@@ -31,6 +32,7 @@ end
 @inline function remove_link(l::Link)
     l.next.prev = l.prev
     l.prev.next = l.next
+    return
 end
 
 function push_link(l1::Link, l2::Link)
@@ -39,9 +41,10 @@ function push_link(l1::Link, l2::Link)
     l2.prev = l1
     l3.prev = l2
     l2.next = l3
+    return
 end
 
-function is_empty(l::Link)
+function is_empty(l::Link)::Bool
     l.next === l
 end
 
@@ -55,6 +58,7 @@ function concat(l1::Link, l2::Link)
     l2.prev.next = l1
     l2.next = l2
     l2.prev = l2
+    return
 end
 
 end
