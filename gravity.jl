@@ -2,7 +2,6 @@ push!(LOAD_PATH, pwd())
 using Vec_lib
 using Body_lib
 using Tree_lib
-using Grid_lib
 using Printf
 
 const G = 4(π^2)
@@ -72,10 +71,7 @@ function main()
     tree::Tree{T} = Tree{T}(T(-size / 2), size, Vector{Tree{T}}(), nothing)
 
     n = convert(Int, div(size, pad))
-    gridsize = size / n
     origin = T(-size / 2)
-    box::Array{Grid{Body{T}}, num_dim(T)} = make_box(Body{T}, size, n)
-    init_grid(box, bodies, gridsize, origin)
 
     earth_sun = Pair(bodies[1], bodies[2], -1.0, 0.0, 0.0, false)
     e = 0
@@ -96,7 +92,6 @@ function main()
     for i in 1:step_num
         t = i * dt
         cycle_leapfrog_tree(tree, bodies, dt, G, theta, size)
-        cycle_leapfrog_grid(box, bodies, dt, size, gridsize, origin)
         # period_check(earth_sun, t)
         if i % 100 == 0
             # e = calculate_energy_gravity(bodies)
